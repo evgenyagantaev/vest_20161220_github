@@ -1,0 +1,94 @@
+void ledBlinkTask(void *parameters)
+{
+   
+  
+   int i = 0;
+   
+   while(1)
+   {
+     //if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)&&(!GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)))
+     if(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)){
+     float curr=battery.getChargeCurrent();
+     if(curr>0.0f)
+     {
+       
+       if(curr>20.0f)
+       {
+       if(i==0)
+         {
+            led.blueLedOn();
+           led.redLedOff();
+          led.greenLedOff(); 
+            i++;
+            //GPIOB->BSRRL=GPIO_Pin_8;  //NSS pin high
+         }
+         else
+         {
+            led.blueLedOff();
+            led.redLedOff();
+          led.greenLedOff();
+            i = 0;
+            //GPIOB->BSRRH=GPIO_Pin_8;  //NSS pin low
+         }
+        
+         vTaskDelay(delay500); 
+       }
+       else
+       {
+          led.blueLedOn();
+          led.redLedOff();
+          led.greenLedOff();
+          vTaskDelay(delay500);
+       }
+     }
+    /* else if(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_0)&&(GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_1)))
+     {
+       
+     }*/
+     }
+     else
+     {
+       //battery.getChargeCurrent();
+       led.blueLedOff();
+      if(common.batteryCharge > 80)
+      {
+         led.redLedOff();
+         
+         if(i==0)
+         {
+            led.greenLedOn(); 
+            i++;
+            //GPIOB->BSRRL=GPIO_Pin_8;  //NSS pin high
+         }
+         else
+         {
+            led.greenLedOff();
+            i = 0;
+            //GPIOB->BSRRH=GPIO_Pin_8;  //NSS pin low
+         }
+        
+         vTaskDelay(delay500); 
+      }
+      else
+      {
+         led.greenLedOff();
+         
+         if(i==0)
+         {
+            led.redLedOn();
+            i++;
+            //GPIOB->BSRRL=GPIO_Pin_8;  //NSS pin high
+         }
+         else
+         {
+            led.redLedOff();
+            i = 0;
+            //GPIOB->BSRRH=GPIO_Pin_8;  //NSS pin low
+         }
+        
+         vTaskDelay(delay500); 
+      }
+      
+   }
+   }
+}

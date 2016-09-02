@@ -1,0 +1,478 @@
+// This class provides functionality of rr-intervals histogramm
+
+class clsRrHistogramm
+{
+//******************************************************************************   
+private://                   PRIVATE ZONE
+//******************************************************************************   
+
+   //************************* constants ***************************************
+   static const int BINSTEP = 25; // bin step in miliseconds 
+   static const int SAMPLELENGTH = 128; // number of rr intervals we include in sample 
+   //*********************** end constants *************************************   
+
+
+   //************************* variables ***************************************
+   double tensionIndex;
+   int max, min;        // minimal and maximal values of rr sample
+   int numberOfhistogrammBins;
+   int lowerBound, upperBound; // lower and upper bounds of histogramm bins 
+   
+   struct bin
+   {
+      int samplesVector[SAMPLELENGTH];
+      int binLowerBound, binUpperBound;
+      //bin *next;
+      //bin *previous;
+      int numberOfIntervals;
+      int binMinimum, binMaximum;
+      double binAverage;
+   };
+   
+   bin *lowestBin, *highestBin;
+   bin *binPointer, *binPointerCurrent;
+   bin *binPointersArray[80];
+   int numberOfCreatedBins;
+   
+   int heartRate;
+
+   //*********************** end variables *************************************
+
+
+   //********************* private functions ***********************************
+   
+   
+   
+   
+
+   //******************** end private functions ********************************
+   
+      
+//******************************************************************************   
+public://                    PUBLIC ZONE
+//******************************************************************************      
+
+   //---------------------------------------------------------------------------
+   // public constructor
+   clsRrHistogramm()
+   {
+      lowestBin = highestBin = NULL;
+      binPointer = binPointerCurrent = NULL;
+      
+      numberOfCreatedBins = 0;
+      
+      tensionIndex = 0;
+      
+   }//end clsRrHistogramm
+   //--------------------------end----------------------------------------------
+   
+   
+   //************************ properties ***************************************
+   int getSAMPLELENGTH(void)
+   { return SAMPLELENGTH; }
+   
+   int getMin(void)
+   { return min; }
+   
+   int getMax(void)
+   { return max; }
+   
+   int getLowerBound(void)
+   { return lowerBound; }
+   
+   int getUpperBound(void)
+   { return upperBound; }
+   
+   int getNumberOfhistogrammBins(void)
+   { return numberOfhistogrammBins; }
+   
+   double getTensionIndex(void)
+   { return tensionIndex; }
+   
+   bin *getLowestBinPointer(void)
+   { return lowestBin; }
+   
+   int getBinLowerBound(void *binPointer)
+   {
+      return ((bin *)binPointer)->binLowerBound;
+   }
+   
+   int getBinUpperBound(void *binPointer)
+   {
+      return ((bin *)binPointer)->binUpperBound;
+   }
+   
+   bin *getBinPointerByIndex(int index)
+   {
+      return binPointersArray[index];
+   }
+   
+   int getBinLength(void *binPointer)
+   {
+      return ((bin *)binPointer)->numberOfIntervals;
+   }
+   
+   int getBinSample(void *binPointer, int index)
+   {
+      return ((bin *)binPointer)->samplesVector[index];
+   }
+   
+   int getBinMin(void *binPointer)
+   {
+      return ((bin *)binPointer)->binMinimum;
+   }
+   
+   int getBinMax(void *binPointer)
+   {
+      return ((bin *)binPointer)->binMaximum;
+   }
+   
+   double getBinAver(void *binPointer)
+   {
+      return ((bin *)binPointer)->binAverage;
+   }
+   //********************** end properties *************************************
+   
+   //********************* public functions ************************************
+   void min_max_finding(int *rrvector, int vectorLength,int SAMPLELENGTH)
+   {
+      min = max = rrvector[vectorLength - 1];
+      
+      for(int i=2; i<=SAMPLELENGTH; i++)
+      {
+         int rrInterval = rrvector[vectorLength - i];
+         
+         if(rrInterval < min)
+            min = rrInterval;
+         else if(rrInterval > max)
+            max = rrInterval;
+         
+      }
+   }
+   
+   void calculateNumberOfhistogrammBins(void)
+   {
+      // seek for lower bound
+      int doJob = 1;
+      lowerBound = min;
+      while(doJob)
+      {
+         if(lowerBound%BINSTEP == 0)
+            doJob = 0;
+         else
+            lowerBound++;
+      }
+      
+      doJob = 1;
+      upperBound = max;
+      while(doJob)
+      {
+         if(upperBound%BINSTEP == 0)
+            doJob = 0;
+         else
+            upperBound--;
+      }
+      
+      numberOfhistogrammBins = (upperBound - lowerBound)/BINSTEP + 2;
+      
+   }
+   
+   
+   // function fills histogramm bins (archived variant)
+   /*
+   void fillBins(int *rrvector, int vectorLength,int SAMPLELENGTH)
+   {
+      //debug
+      static char debugString1[80], debugString2[80];
+      
+      if((binPointer = (bin *)pvPortMalloc(sizeof(bin)))==NULL) 
+      {
+         while(1)
+         {
+            sprintf(debugString1, "memory allocation error 001\r\n");
+            xSemaphoreTake(uartMutex, portMAX_DELAY);
+            uart.sendMessage(debugString1);
+            xSemaphoreGive(uartMutex);
+            vTaskDelay(delay1000);
+         }
+         
+      }
+      
+      lowestBin = binPointer;
+      
+      if((binPointer = (bin *)pvPortMalloc(sizeof(bin)))==NULL) 
+      {
+         while(1)
+         {
+            sprintf(debugString1, "memory allocation error 002\r\n");
+            xSemaphoreTake(uartMutex, portMAX_DELAY);
+            uart.sendMessage(debugString1);
+            xSemaphoreGive(uartMutex);
+            vTaskDelay(delay1000);
+         }
+         
+      }
+      
+      highestBin = binPointer;
+      
+      lowestBin->binLowerBound = 0;
+      lowestBin->binUpperBound = lowerBound;
+      lowestBin->previous = NULL;
+      lowestBin->numberOfIntervals = 0;
+      highestBin->binLowerBound = upperBound;
+      highestBin->binUpperBound = 10000;
+      highestBin->next = NULL;
+      highestBin->numberOfIntervals = 0;
+      
+      binPointerCurrent = lowestBin;
+      
+      for(int i = lowerBound; i < upperBound; i += BINSTEP)
+      {
+         if((binPointer = (bin *)pvPortMalloc(sizeof(bin)))==NULL) 
+         {
+            while(1)
+            {
+               sprintf(debugString1, "memory allocation error %d\r\n", i);
+               xSemaphoreTake(uartMutex, portMAX_DELAY);
+               uart.sendMessage(debugString1);
+               xSemaphoreGive(uartMutex);
+               vTaskDelay(delay1000);
+            }
+            
+         }
+         
+         binPointerCurrent->next = binPointer;
+         binPointer->previous = binPointerCurrent;
+         binPointerCurrent = binPointer;
+         binPointerCurrent->binLowerBound = i;
+         binPointerCurrent->binUpperBound = i + BINSTEP;
+         binPointerCurrent->numberOfIntervals = 0;
+         
+         
+      }
+      binPointerCurrent->next = highestBin;
+      highestBin->previous = binPointerCurrent;
+      
+      
+   /*
+      binPointerCurrent = lowestBin;
+      for(int i=0; i<numberOfhistogrammBins; i++)
+      {
+         //debug ******************************************
+         
+         for(int j=0; j<SAMPLELENGTH; j++)
+         {
+            int rrInterval = rrvector[vectorLength - j];
+            
+            if((rrInterval >= (binPointerCurrent->binLowerBound)) &&
+               rrInterval < (binPointerCurrent->binUpperBound))
+            {
+               binPointerCurrent->samplesVector[binPointerCurrent->numberOfIntervals] = rrInterval;
+               (binPointerCurrent->numberOfIntervals)++;
+            }
+               
+         }
+         
+         binPointerCurrent = binPointerCurrent->next;
+
+      }
+      
+      
+   } // end fillBins (archived variant)
+   //
+   */
+   
+   
+   // function fills histogramm bins
+   // function creates list elements as they needed
+   // then unused elements are stay unused (no list elements deletion)
+   void fillBins(int *rrvector, int vectorLength,int SAMPLELENGTH)
+   {
+      //debug
+      static char debugString1[80];
+      /*
+      sprintf(debugString1, "fill bins function entry\r\n");
+      xSemaphoreTake(uartMutex, portMAX_DELAY);
+      uart.sendMessage(debugString1);
+      xSemaphoreGive(uartMutex);
+      vTaskDelay(delay10);
+      //
+      */
+      
+      
+      if(numberOfhistogrammBins > numberOfCreatedBins)
+      {
+         // create missing bins
+         for(int i=0; i<(numberOfhistogrammBins - numberOfCreatedBins); i++)
+         {
+            int j = numberOfCreatedBins + i;
+            if((binPointer = (bin *)pvPortMalloc(sizeof(bin)))==NULL) 
+            {
+               while(1)
+               {
+                  sprintf(debugString1, "memory allocation error %d\r\n", j);
+                  xSemaphoreTake(uartMutex, portMAX_DELAY);
+                  uart.sendMessage(debugString1);
+                  xSemaphoreGive(uartMutex);
+                  vTaskDelay(delay1000);
+               }
+               
+            }
+            
+            binPointersArray[j] = binPointer;
+
+         }
+         
+         numberOfCreatedBins = numberOfhistogrammBins;
+      }
+      
+      lowestBin = binPointersArray[0];
+      
+      lowestBin->binLowerBound = 0;
+      lowestBin->binUpperBound = lowerBound;
+      lowestBin->numberOfIntervals = 0;
+      
+      highestBin = binPointersArray[numberOfhistogrammBins - 1];
+      
+      highestBin->binLowerBound = upperBound;
+      highestBin->binUpperBound = 10000;
+      highestBin->numberOfIntervals = 0;
+      
+      
+      int bound = lowerBound;
+      for(int i=1; i<(numberOfhistogrammBins - 1); i++)
+      {
+         binPointerCurrent = binPointersArray[i];
+         
+         binPointerCurrent->binLowerBound = bound;
+         bound = bound + BINSTEP;
+         binPointerCurrent->binUpperBound = bound;
+         binPointerCurrent->numberOfIntervals = 0;
+         
+         
+      }
+      
+      double moda = 0.0;
+      double modaAmplitude = 0.0;
+      
+      //*
+      for(int i=0; i<numberOfhistogrammBins; i++)
+      {
+         //debug ******************************************
+         /*
+         sprintf(debugString1, "bin %d filling started\r\n", i);
+         xSemaphoreTake(uartMutex, portMAX_DELAY);
+         uart.sendMessage(debugString1);
+         xSemaphoreGive(uartMutex);
+         vTaskDelay(delay10);
+         //
+        */
+         
+         binPointerCurrent = binPointersArray[i];
+         
+         for(int j=0; j<SAMPLELENGTH; j++)
+         {
+            int rrInterval = rrvector[vectorLength - j];
+            
+            if((rrInterval >= (binPointerCurrent->binLowerBound)) &&
+               rrInterval < (binPointerCurrent->binUpperBound))
+            {
+               binPointerCurrent->samplesVector[binPointerCurrent->numberOfIntervals] = rrInterval;
+               (binPointerCurrent->numberOfIntervals)++;
+            }
+               
+         }
+         
+         // Calculate bin charachteristics ************************************
+         
+         if(binPointerCurrent->numberOfIntervals > 0)
+         {
+            //calculate bin max, min and average
+            binPointerCurrent->binMinimum = binPointerCurrent->samplesVector[0];
+            binPointerCurrent->binMaximum = binPointerCurrent->samplesVector[0];
+            binPointerCurrent->binAverage = binPointerCurrent->samplesVector[0];
+            
+            for(int i=1; i<binPointerCurrent->numberOfIntervals; i++)
+            {
+               if(binPointerCurrent->binMinimum > binPointerCurrent->samplesVector[i])
+                  binPointerCurrent->binMinimum = binPointerCurrent->samplesVector[i];
+               else if(binPointerCurrent->binMaximum < binPointerCurrent->samplesVector[i])
+                  binPointerCurrent->binMaximum = binPointerCurrent->samplesVector[i];
+               
+               binPointerCurrent->binAverage += binPointerCurrent->samplesVector[i];
+            }
+            
+            binPointerCurrent->binAverage /= binPointerCurrent->numberOfIntervals;
+            
+            if(modaAmplitude < binPointerCurrent->numberOfIntervals)
+            {
+               modaAmplitude = binPointerCurrent->numberOfIntervals;
+               moda = binPointerCurrent->binAverage;
+            }
+            
+         }
+         else // binPointerCurrent->numberOfIntervals == 0
+         {
+            binPointerCurrent->binMinimum = 0;
+            binPointerCurrent->binMaximum = 0;
+            binPointerCurrent->binAverage = 0;
+         }
+         
+      }
+      
+      // calculate Bayevsky tension index
+      if(moda != 0)
+         //heartRate = 60000/moda;
+         heartRate = common.heartRate;
+      else
+         heartRate = 111;
+      
+      if((heartRate >= 45) && (heartRate <= 110) && 
+         ((double)(max - min))/((double)max) < 0.3)
+      {
+         modaAmplitude = modaAmplitude * 100 / SAMPLELENGTH;
+         moda = moda / 1000.0;
+         //debug
+         /*
+         sprintf(debugString2, "mo=%f; Amo = %f; dRR = %f\r\n",
+                 moda, modaAmplitude, (max - min)/1000.0);
+         xSemaphoreTake(uartMutex, portMAX_DELAY);
+         uart.sendMessage(debugString2);
+         xSemaphoreGive(uartMutex);
+         vTaskDelay(delay10);
+         //
+         */
+         tensionIndex = modaAmplitude / (2 * moda * ((max - min)/1000.0));
+      }
+      else
+        tensionIndex = 0; 
+      
+      
+      //debug
+      /*
+      sprintf(debugString2, "fill bins function exit\r\n");
+      xSemaphoreTake(uartMutex, portMAX_DELAY);
+      uart.sendMessage(debugString2);
+      xSemaphoreGive(uartMutex);
+      vTaskDelay(delay10);
+      //
+      */
+      
+   } // end fillBins
+   
+   
+   // function calculates Bayevsky tension index
+   
+   //******************* end public functions **********************************
+   
+   
+   //---------------------------------------------------------------------------
+   // Function ...
+   void someFunction(void)
+   {
+      
+   }//end someFunction
+   //--------------------------end----------------------------------------------
+   
+      
+};
