@@ -10,7 +10,6 @@ settings/*
 #*.eww
 *.sfr
 #*.icf
-smb380*
 smt*
 Classes/*old*
 *.o
