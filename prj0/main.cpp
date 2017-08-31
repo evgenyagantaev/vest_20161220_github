@@ -6,14 +6,14 @@
 
 #define WATCHDOGTIMEOUT 250   //watchdog timeout
 
-#define DEVICENAME "VEST-BIO751"
+#define DEVICENAME "VEST-BIO733"
 
 //uart output definitions, status string is always writing
-//#define SAMPLES                 // turns on samples output via uart
-//#define MARKERS                 // turns on markers output via uart
+#define SAMPLES                 // turns on samples output via uart
+#define MARKERS                 // turns on markers output via uart
 //#define ACCEL                   // turns on accelerometer output via uart
-//#define HISTOGRAMM              // turns on rr-histogramm output via uart
-//#define WIDEDIAGNOSIS           // turns on status with Bayevsky and hr-integral
+#define HISTOGRAMM              // turns on rr-histogramm output via uart
+#define WIDEDIAGNOSIS           // turns on status with Bayevsky and hr-integral
 
 
 //sdio write definitions, status string is always writing
@@ -564,6 +564,7 @@ int main()
     //////////////////////////////////////////////////////////////////////////
     // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
     //make_hard_fault();
+    /*
     led.greenLedOn(); 
     float temperature = 0;
     while(1)
@@ -573,6 +574,7 @@ int main()
         sprintf(anyMessage32, "T = %7.2f\r\n", temperature);
         uart.sendBytes(anyMessage32, 0); 
     }
+    */
     // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
     
    
