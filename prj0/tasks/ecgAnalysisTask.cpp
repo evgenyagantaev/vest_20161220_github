@@ -62,8 +62,8 @@ void ecgAnalysisTask(void *parameters)
                  //isolineController.currentIsoline);
          //sprintf(sampleTxtBuffer, "%dI%d\r\n", adc1Buffer[adc1BufferTail],
                  //isolineController.currentIsoline);
-         sprintf(sampleTxtBuffer, "%dI%d\r\n", ecgAnalizer.oldSample(),
-                 ecgAnalizer.oldIsoline());
+         sprintf(sampleTxtBuffer, "%dI%d\r\n", ecgAnalizer.oldSample()/9,
+                 ecgAnalizer.oldIsoline()/9);
          
         
    
