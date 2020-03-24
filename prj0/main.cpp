@@ -34,7 +34,7 @@ use LSE (external) osc as RTC clock source (works with clock battery, power off)
 if not defined source is LSI (internal) (works with power on only)
 */
 
-#define USEFLASH 
+//#define USEFLASH 
 /*
 use flash read/write operations for IAP & powerOff control
 don't forget set VECT_TAB_OFFSET in system_stm32f2xx.c to 0x8000 if defined 
@@ -501,8 +501,8 @@ int main()
    uart.sendBytes("AT+AB Bypass\r\n",0); //start connection if connection is still available
    for(volatile long i=0; i<1000000; i++);
    
-   //uart.sendBytes("AT+AB Reset\r\n",0); //reset bt
-   //for(volatile long i=0; i<80000000; i++);
+   uart.sendBytes("AT+AB Reset\r\n",0); //reset bt
+   for(volatile long i=0; i<80000000; i++);
    
    //------------------------------------------------------------------------------------------------------------------------------------------->>>>>>>>>>>>
    
@@ -556,8 +556,28 @@ int main()
       for(volatile long i=0; i<15000000; i++);
       led.greenLedOff(); 
       for(volatile long i=0; i<15000000; i++);
+      
     }
     
+    // debug!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    /*
+    while(1)
+    {
+          led.greenLedOn(); 
+          for(volatile long i=0; i<15000000; i++);
+          led.greenLedOff(); 
+          for(volatile long i=0; i<15000000; i++);
+          led.redLedOn(); 
+          for(volatile long i=0; i<15000000; i++);
+          led.redLedOff(); 
+          for(volatile long i=0; i<15000000; i++);
+          led.blueLedOn(); 
+          for(volatile long i=0; i<15000000; i++);
+          led.blueLedOff(); 
+          for(volatile long i=0; i<15000000; i++);
+    }
+    //*/
+    // debug!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     //////////////////////////////////////////////////////////////////////////
     //                     INITIALIZATION COMPLETE
